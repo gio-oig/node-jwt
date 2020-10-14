@@ -1,19 +1,24 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
 const { registerValidation, loginValidation } = require('../validation');
+const HttpError = require('../routes/http-error');
 
+// models
 const User = require('../models/userModel');
+// middlewares
+const fileUpload = require('../middleware/file-upload');
 
-router.post('/register', async (req, res) => {
+router.post('/register', fileUpload.single('image'), async (req, res, next) => {
 	// validate the data before we create user
 	const { error } = registerValidation(req.body);
-	if (error) return res.status(400).send(error.details[0].message);
+	if (error) return next(new HttpError(error.details[0].message, 400));
 
 	// check if the user email is already in the database
 	const userExists = await User.findOne({ email: req.body.email });
 	if (userExists)
-		return res.status(400).send('user already exists with this email');
+		return next(new HttpError('user already exists with this email', 400));
 
 	// Hash password
 	const salt = await bcrypt.genSalt();
@@ -21,34 +26,38 @@ router.post('/register', async (req, res) => {
 	// res.send(hashedPassword);
 	const user = new User({
 		name: req.body.name,
+		image: req.file.path,
 		email: req.body.email,
 		password: hashedPassword,
 	});
 
+	let createdUser;
 	try {
-		const createdUser = await user.save();
-		res.json(createdUser);
+		createdUser = await user.save();
 	} catch (error) {
-		res.status(400).send(error);
+		return next(new HttpError('Logging in faild, please try later', 500));
 	}
+	res.json(createdUser);
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
 	// validate the date
 	const { error } = loginValidation(req.body);
-	if (error) return res.status(400).send(error.details[0].message);
+	if (error) return next(new HttpError(error.details[0].message, 400));
+
+	const { email, password } = req.body;
 
 	// check if user exists
-	const user = await User.findOne({ email: req.body.email });
-	if (!user) return res.status(400).send('Email is not found');
+	const user = await User.findOne({ email });
+	if (!user) return next(new HttpError('Email is not found', 400));
 
-	const validpassword = await bcrypt.compare(req.body.password, user.password);
-	console.log(validpassword);
-	if (!validpassword) return res.status(400).send('Invalid password');
+	// validate hashed password
+	const validpassword = await bcrypt.compare(password, user.password);
+	if (!validpassword) return next(new HttpError('Invalid password', 400));
 
 	// create and assign a toket
 	const token = jwt.sign({ _id: user.id }, process.env.TOKEN_SECRET);
-	res.header('auth-token', token).send(token);
+	res.header('auth-token', token).json(user);
 });
 
 router.get('/io', (req, res) => {

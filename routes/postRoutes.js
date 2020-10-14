@@ -8,7 +8,7 @@ router.get('/', auth, (req, res) => {
 	// 		description: 'It must be a good post',
 	// 	},
 	// });
-	res.send(req.user);
+	res.json(req.user);
 });
 
 module.exports = router;
