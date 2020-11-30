@@ -7,10 +7,10 @@ const userSchema = new mongoose.Schema({
 		min: 3,
 		max: 255,
 	},
-	image: {
-		type: String,
-		required: true,
-	},
+	// image: {
+	// 	type: String,
+	// 	required: true,
+	// },
 	email: {
 		type: String,
 		required: true,

@@ -8,9 +8,9 @@ const auth = (req, res, next) => {
 	if (!token) return next(new HttpError('Access Denied', 401));
 
 	try {
-		// verify returns user id saved in token
+		// verify user id saved in token
 		const verified = jwt.verify(token, process.env.TOKEN_SECRET);
-		// set user id inside request object
+		// add user id in request object
 		req.user = verified;
 	} catch (error) {
 		return next(new HttpError('Invalid Token', 400));
