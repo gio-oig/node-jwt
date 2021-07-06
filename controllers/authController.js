@@ -2,12 +2,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const { registerValidation, loginValidation } = require('../validation');
-const HttpError = require('../routes/http-error');
+const HttpError = require('../utils/http-error');
 
 // models
 const User = require('../models/userModel');
 // middlewares
 const fileUpload = require('../middleware/file-upload');
+const role = require('../utils/role');
 
 const registerUser = async (req, res, next) => {
 	// validate the data before we create user
@@ -26,6 +27,7 @@ const registerUser = async (req, res, next) => {
 	const user = new User({
 		name: req.body.name,
 		email: req.body.email,
+		role: role.User,
 		password: hashedPassword,
 	});
 
@@ -35,7 +37,7 @@ const registerUser = async (req, res, next) => {
 	} catch (error) {
 		return next(new HttpError('Logging in faild, please try later', 500));
 	}
-	res.json(createdUser);
+	return res.json(createdUser);
 };
 
 const loginUser = async (req, res, next) => {
@@ -54,8 +56,9 @@ const loginUser = async (req, res, next) => {
 	if (!validpassword) return next(new HttpError('Invalid password', 400));
 
 	// create and assign a toket
-	const token = jwt.sign({ _id: user.id }, process.env.TOKEN_SECRET);
+	const token = jwt.sign({ sub: user.id, role: user.role }, process.env.TOKEN_SECRET);
 	res.header('auth-token', token).json({ message: 'logged in' });
+
 };
 
 module.exports = {

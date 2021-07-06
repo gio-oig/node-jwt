@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const HttpError = require('./routes/http-error');
+const HttpError = require('./utils/http-error');
 
 const auth = (req, res, next) => {
 	// check if token in in header and get it's value

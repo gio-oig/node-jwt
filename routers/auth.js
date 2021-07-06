@@ -3,7 +3,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const { registerValidation, loginValidation } = require('../validation');
-const HttpError = require('../routes/http-error');
+const HttpError = require('../utils/http-error');
+
 
 const authController = require('../controllers/authController');
 
